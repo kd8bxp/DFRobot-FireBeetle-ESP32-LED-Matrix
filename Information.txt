@@ -5,11 +5,6 @@ https://www.epochconverter.com/timezones
 
 Sketch will display time in either a 24 hour format (Also known as Military time) or with AM or PM.
 
-Known issues: Leading zeros in seconds and minutes are missing. Would like 
-to fix when I have some free time.
-Lots of code commented out, (code needs to be cleaned up).
-SmartConfig for ESP32 doesn't work as expected. (Known issue)
-
 * See the sketch for more information on how to setup and use.
 
 ----------------
@@ -18,20 +13,16 @@ Requires: NTPClient Library (see link above)
 Set your time zone off set (see link above)
 This is a sketch is very simple - it only displays time in a 24 hour format.
 
-Known issues: SmartConfig for ESP32 doesn't work as expected. (Known issue)
-
 * See the sketch for more information on how to setup and use.
 
 ------------------
-DFRobot LED Matrix ISS Pass Prediction Display Works Task Delay - version 2.0.0
+DFRobot LED Matrix ISS Display - version 2.1.0
 Based off my code in the More Examples directory, Sketch now uses
-ESP32 2nd core for better collection of data from open-notify.
+ESP32 2nd core for a configuration website.
+A third task runs about every 15 minutes to update the pass predictions
+and how many people are in space from open-notify.
 
 Required Library: ArduinoJson.h https://github.com/bblanchon/ArduinoJson
-
-Known issues: Smartconfig (see above)
-Sketch Name is long.
-Sketch may display more information that you really want or need.
 
 * See the sketch for more info on how to set it up.
 
@@ -41,7 +32,6 @@ Requires: PubSubClient library
 A Very simple moving message display for the LED Matrix, the sketch
 listens to a MQTT topic and displays what it hears on the LED Matrix
 
-Know Issues: SmartConfig (See above)
 Message is limited to between 24 and 27 characters (Maybe a limiation of
 the DFRobot Library, or a memory limit, I'm not sure)
 
@@ -52,8 +42,6 @@ DFRobot LED Matrix Working Weather Station Display - version 1.0.0
 Requires: WundergroundClient library https://github.com/ThingPulse/esp8266-weather-station  tested with version 1.5.0 of library
 
 Based on the ESP8266 Weather Station code by Squix78 and ThingPulse
-
-Known issues: Smartconfig (see above)
 
 * See instructable for guide on setting this sketch up.
 

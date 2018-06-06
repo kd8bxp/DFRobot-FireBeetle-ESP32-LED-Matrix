@@ -7,6 +7,9 @@
  * Version 1.0.0 - June 2, 2018
  * Known Issues: SmartConfig doesn't work as expected.
  * 
+ * version 1.0.1 - June 6, 2018
+ * Replaced SmarConfig with WiFiManager
+ * 
 Copyright (c) 2018 LeRoy Miller
 
     This program is free software: you can redistribute it and/or modify
@@ -31,9 +34,22 @@ https://github.com/kd8bxp
 https://www.youtube.com/channel/UCP6Vh4hfyJF288MTaRAF36w  
 https://kd8bxp.blogspot.com/  
 */
+#if defined(ESP8266)
+#include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
+#else
+#include <WiFi.h>          
+#endif
+
+//needed for library
+#include <DNSServer.h>  //https://github.com/bbx10/DNSServer_tng
+#if defined(ESP8266)
+#include <ESP8266WebServer.h>
+#else
+#include <WebServer.h> //https://github.com/bbx10/WebServer_tng
+#endif
+#include <WiFiManager.h>         //https://github.com/bbx10/WiFiManager/tree/esp32
 
 #include "DFRobot_HT1632C.h"
-#include <WiFi.h>
 #include "WundergroundClient.h" //https://github.com/ThingPulse/esp8266-weather-station  Need at least version 1.5.0 of library
 #include <JsonListener.h>
 
@@ -76,7 +92,11 @@ void setup() {
   display.setCursor(0,0);
  display.setFont(FONT8X4);
  display.print("Weather Display.", 30);
- smartConnect();
+ WiFiManager wifiManager;
+  wifiManager.autoConnect("AutoConnectAP");
+  Serial.println("connected...yeey :)");
+  Serial.println("WiFi connected");
+  display.print("Connected.....",30);
  display.print("Updating...",30);
 updateData();
 xTaskCreatePinnedToCore(
@@ -97,37 +117,6 @@ CurrentWeather();
 delay(150);
 yield();
 
-}
-
-void smartConnect() {
-  //Init WiFi as Station, start SmartConfig
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.beginSmartConfig();
-
-  //Wait for SmartConfig packet from mobile
-  Serial.println("Waiting for SmartConfig.");
-  display.print("Waiting...",20);
-  while (!WiFi.smartConfigDone()) {
-    delay(500);
-    Serial.print(".");
-    display.print("Waiting...",20);
-  }
-
-  Serial.println("");
-  Serial.println("SmartConfig received.");
-display.print("SmartConfig received.", 20);
-  //Wait for WiFi to connect to AP
-  Serial.println("Waiting for WiFi");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("WiFi Connected.");
-  display.print("Connected.", 20);
-  Serial.print("IP Address: ");
-  //display.print(WiFi.localIP(),50);
-  Serial.println(WiFi.localIP());
 }
 
 void CurrentWeather() {

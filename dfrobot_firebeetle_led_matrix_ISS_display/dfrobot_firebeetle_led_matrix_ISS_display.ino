@@ -7,6 +7,11 @@
  * Known Issues: SmartConfig doesn't work as Expected.
  * Sketch may display more information that needed.
  * 
+ * version 2.1.0 - June 6, 2018 
+ * SmartConfig replaced with WiFiManager
+ * added a configuration website so you can decide on the fly
+ * what you want displayed. 
+ * 
  * See below for more on how to setup for your location
  * 
 Copyright (c) 2018 LeRoy Miller
@@ -33,8 +38,33 @@ https://github.com/kd8bxp
 https://www.youtube.com/channel/UCP6Vh4hfyJF288MTaRAF36w  
 https://kd8bxp.blogspot.com/  
 */
+
+#if defined(ESP8266)
+#include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
+#else
+#include <WiFi.h>          
+#endif
+
+//needed for library
+#include <DNSServer.h>  //https://github.com/bbx10/DNSServer_tng
+#if defined(ESP8266)
+#include <ESP8266WebServer.h>
+#else
+#include <WebServer.h> //https://github.com/bbx10/WebServer_tng
+#endif
+#include <WiFiManager.h>         //https://github.com/bbx10/WiFiManager/tree/esp32
+
+int locDis = 1;
+int pasDis = 1;
+int pplDis = 1;
+
+WiFiServer server(80);
+
+// Client variables 
+char linebuf[80];
+int charcount=0;
+
 #include "DFRobot_HT1632C.h"
-#include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h> //https://github.com/bblanchon/ArduinoJson
 #include <TimeLib.h> 
@@ -65,16 +95,34 @@ String pas = "http://api.open-notify.org/iss-pass.json?";
 void coreTask( void * pvParameters ){
 
  while(true) {
+   //WiFiClient client = server.available();
+  //if (client) { webConfig(); }
+   webConfig();
+   yield();
+    //delay(interval);
+    //getJson(pas);
+    //decodePassJson();
+    //getJson(ppl);
+    //decodePeopleJson();
+   }
+ yield();
+}
+
+void updateISSTask ( void * pvParameters ) {
+  while(true) {
     delay(interval);
     getJson(pas);
     decodePassJson();
     getJson(ppl);
     decodePeopleJson();
-   }
- yield();
+    Serial.println("updateISSTask ran");
+  }
+  yield();
 }
 
 void setup() {
+  
+  //Initialize serial and wait for port to open:
   Serial.begin(9600);
   xTaskCreatePinnedToCore(
                     coreTask,   /* Function to implement the task */
@@ -84,61 +132,132 @@ void setup() {
                     0,          /* Priority of the task */
                     NULL,       /* Task handle. */
                     taskCore);  /* Core where the task should run */
- 
+  xTaskCreate( updateISSTask,"updateISSTake",10000,NULL,1,NULL);
   display.begin();
   display.isLedOn(true);
   display.clearScreen();
   display.setCursor(0,0);
   display.setFont(FONT8X4);
   display.print("ISS Notification Display!", 30);
-  smartConnect();
+  WiFiManager wifiManager;
+  wifiManager.autoConnect("AutoConnectAP");
+  Serial.println("connected...yeey :)");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  display.print("Connected.....",30);
   pas = pas + "lat=" + (String)mylat+"&lon="+ (String)mylon;
   getJson(pas);
   decodePassJson();
   getJson(ppl);
   decodePeopleJson();
+  
+  server.begin();
 }
 
 void loop() {
+ 
+  
+  if (locDis == 1) {
   getJson(iss);
   decodeLocJson();
   getDistance();
   issLocLEDDisplay();
+  }
+
+  if (pasDis == 1) {
   displayPassLED();
-  displayPeopleLED();
+  }
+  if (pplDis == 1) {
+    displayPeopleLED();
+  }
   yield();
+  delay(100);
 
 }
 
-void smartConnect() {
-  //Init WiFi as Station, start SmartConfig
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.beginSmartConfig();
+void webConfig() {
+  // listen for incoming clients
+  WiFiClient client = server.available();
+  if (client) {
+    Serial.println("New client");
+    memset(linebuf,0,sizeof(linebuf));
+    charcount=0;
+    // an http request ends with a blank line
+    boolean currentLineIsBlank = true;
+    while (client.connected()) {
+      if (client.available()) {
+        char c = client.read();
+        Serial.write(c);
+        //read char by char HTTP request
+        linebuf[charcount]=c;
+        if (charcount<sizeof(linebuf)-1) charcount++;
+        // if you've gotten to the end of the line (received a newline
+        // character) and the line is blank, the http request has ended,
+        // so you can send a reply
+        if (c == '\n' && currentLineIsBlank) {
+          // send a standard http response header
+          client.println("HTTP/1.1 200 OK");
+          client.println("Content-Type: text/html");
+          client.println("Connection: close");  // the connection will be closed after completion of the response
+          client.println();
+          client.println("<!DOCTYPE HTML><html><head>");
+          client.println("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head>");
+          client.println("<h1>ISS Display Configuration</h1>");
+          client.print("<p>Display Location: ");
+          client.print(locDis ? "Yes" : "No");
+          client.print(" Pass Predict: ");
+          client.print(pasDis ? "Yes" : "No");
+          client.print(" People: ");
+          client.println(pplDis ? "Yes" : "No");
+          client.println("<br><br>Display: ");
+          client.println("<p>ISS Location: <a href=\"loc1\"><button>YES</button></a>&nbsp;<a href=\"loc0\"><button>NO</button></a></p>");
+          client.println("<p>Pass Prediction: <a href=\"pass1\"><button>YES</button></a>&nbsp;<a href=\"pass0\"><button>NO</button></a></p>");
+          client.println("<p>People: <a href=\"ppl1\"><button>YES</button></a>&nbsp;<a href=\"ppl0\"><button>NO</button></a></p>");
+          client.println("</html>");
+          break;
+        }
+        if (c == '\n') {
+          // you're starting a new line
+          currentLineIsBlank = true;
+          if (strstr(linebuf,"GET /loc1") > 0){
+            //Serial.println("LED 1 ON");
+            locDis = 1;
+          }
+          else if (strstr(linebuf,"GET /loc0") > 0){
+            //Serial.println("LED 1 OFF");
+            locDis = 0;
+          }
+          else if (strstr(linebuf,"GET /pass1") > 0){
+            //Serial.println("LED 2 ON");
+            pasDis = 1;
+          }
+          else if (strstr(linebuf,"GET /pass0") > 0){
+            pasDis = 0;
+          }
+          else if (strstr(linebuf,"GET /ppl1") > 0) {
+          pplDis = 1;
+        }
+        else if (strstr(linebuf,"GET /ppl0") >0) {
+        pplDis = 0;
+      }
+          // you're starting a new line
+          currentLineIsBlank = true;
+          memset(linebuf,0,sizeof(linebuf));
+          charcount=0;
+        } else if (c != '\r') {
+          // you've gotten a character on the current line
+          currentLineIsBlank = false;
+        }
+      }
+    }
+    // give the web browser time to receive the data
+    delay(1);
 
-  //Wait for SmartConfig packet from mobile
-  Serial.println("Waiting for SmartConfig.");
-  display.print("Waiting...",20);
-  while (!WiFi.smartConfigDone()) {
-    delay(500);
-    Serial.print(".");
-    display.print("Waiting...",20);
+    // close the connection:
+    client.stop();
+    Serial.println("client disconnected");
   }
-
-  Serial.println("");
-  Serial.println("SmartConfig received.");
-display.print("SmartConfig received.", 20);
-  //Wait for WiFi to connect to AP
-  Serial.println("Waiting for WiFi");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("WiFi Connected.");
-  display.print("Connected.", 20);
-  Serial.print("IP Address: ");
-  //display.print(WiFi.localIP(),50);
-  Serial.println(WiFi.localIP());
 }
 
 
@@ -278,7 +397,7 @@ void displayPeopleLED() {
   display.setCursor(0,0);
   display.print(temp2,30);
 
-  if (number > 5) {number = 5;} //Display the 1st 5 Astros on LED 
+  //if (number > 5) {number = 5;} //Display the 1st 5 Astros on LED 
    for (int i=0;i<number; i++) {
     String rTemp = name[i] + " on board " + craft[i];
     const char *temp1;
@@ -288,4 +407,5 @@ void displayPeopleLED() {
  
   }
 }
+
 

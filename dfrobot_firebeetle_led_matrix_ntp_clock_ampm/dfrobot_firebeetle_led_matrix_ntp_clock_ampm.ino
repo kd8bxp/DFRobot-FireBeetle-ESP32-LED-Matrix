@@ -5,6 +5,8 @@
  * or with AM or PM.  See below for more on how to setup.
  * 
  * version 1.0.0 - June 1, 2018 
+ * version 1.0.1 - June 6, 2018 - replaced SmartConfig with WiFiManager
+ * cleaned up code, and added leading zeros where/when needed.
  * 
 Copyright (c) 2018 LeRoy Miller
 
@@ -31,6 +33,22 @@ https://www.youtube.com/channel/UCP6Vh4hfyJF288MTaRAF36w
 https://kd8bxp.blogspot.com/  
 */
 
+
+#if defined(ESP8266)
+#include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
+#else
+#include <WiFi.h>          
+#endif
+
+//needed for library
+#include <DNSServer.h>  //https://github.com/bbx10/DNSServer_tng
+#if defined(ESP8266)
+#include <ESP8266WebServer.h>
+#else
+#include <WebServer.h> //https://github.com/bbx10/WebServer_tng
+#endif
+#include <WiFiManager.h>         //https://github.com/bbx10/WiFiManager/tree/esp32
+
 #include <NTPClient.h>  //https://github.com/arduino-libraries/NTPClient
 #include "DFRobot_HT1632C.h"
 #include <WiFi.h>
@@ -48,73 +66,48 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org");
 #define AMPM 1 //1 = AM PM time, 0 = MILITARY/24 HR Time
 
 char temp1[30];
+int hours,minutes,seconds;
 
 void setup() {
   Serial.begin(9600);
- display.begin();
+  display.begin();
   display.isLedOn(true);
   display.clearScreen();
   display.setCursor(0,0);
- display.setFont(FONT8X4);
- //display.print("Clock.", 30);
-  smartConnect();
+  display.setFont(FONT8X4);
+  WiFiManager wifiManager;
+  wifiManager.autoConnect("AutoConnectAP");
+  Serial.println("connected...yeey :)");
+  display.print("Connected.....",30);
   timeClient.begin();
   timeClient.setTimeOffset(TIMEOFFSET);
 }
 
 void loop() {
+
   timeClient.update();
-Serial.println(timeClient.getFormattedTime());
-//String temp = timeClient.getFormattedTime();
-//const char *temp1;
-//temp1 = temp.c_str();
-if (AMPM) {
-  //char temp1[30];
-  if (timeClient.getHours() > 13) {
-    sprintf(temp1,"%d:%d:%d pm",timeClient.getHours() - 12,timeClient.getMinutes(),timeClient.getSeconds());
+  Serial.println(timeClient.getFormattedTime());
+  hours = timeClient.getHours();
+  minutes = timeClient.getMinutes();
+  seconds = timeClient.getSeconds();
+
+       if (AMPM) {
+        if (hours > 13) {
+          hours = hours -12;
+          sprintf(temp1,"%d:%02d:%02d pm",hours,minutes,seconds);
   } else { 
-    if (timeClient.getHours() == 0) {
-      sprintf(temp1,"12:%d:%d am",timeClient.getMinutes(),timeClient.getSeconds());
+    if (hours == 0) {
+      sprintf(temp1,"12:%02d:%02d am",minutes,seconds);
     } else {
-    sprintf(temp1,"%d:%d:%d am",timeClient.getHours(),timeClient.getMinutes(),timeClient.getSeconds());
+    sprintf(temp1,"%d:%02d:%02d am",hours,minutes,seconds);
   }
  }
 } else {
-  //char temp1[30];
-  sprintf(temp1,"%d:%d:%d",timeClient.getHours(),timeClient.getMinutes(),timeClient.getSeconds());
+  
+  sprintf(temp1,"%02d:%02d:%02d",hours,minutes,seconds);
 }
+
 display.print(temp1,20);
 delay(150);
-}
-
-void smartConnect() {
-  //Init WiFi as Station, start SmartConfig
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.beginSmartConfig();
-
-  //Wait for SmartConfig packet from mobile
-  Serial.println("Waiting for SmartConfig.");
-  display.print("Waiting...",20);
-  while (!WiFi.smartConfigDone()) {
-    delay(500);
-    Serial.print(".");
-    display.print("Waiting...",20);
-  }
-
-  Serial.println("");
-  Serial.println("SmartConfig received.");
-display.print("SmartConfig received.", 20);
-  //Wait for WiFi to connect to AP
-  Serial.println("Waiting for WiFi");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("WiFi Connected.");
-  display.print("Connected.", 20);
-  Serial.print("IP Address: ");
-  //display.print(WiFi.localIP(),50);
-  Serial.println(WiFi.localIP());
 }
 
