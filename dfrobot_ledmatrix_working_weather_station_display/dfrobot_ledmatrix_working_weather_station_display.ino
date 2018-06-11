@@ -59,7 +59,7 @@ https://kd8bxp.blogspot.com/
 
 DFRobot_HT1632C display = DFRobot_HT1632C(DATA, WR,CS);
 
-const int UPDATE_INTERVAL = 1 * 60000; // Update every 10 minutes
+const int UPDATE_INTERVAL = 10 * 60000; // Update every 10 minutes
 static int taskCore = 0;
 
 // Wunderground Settings

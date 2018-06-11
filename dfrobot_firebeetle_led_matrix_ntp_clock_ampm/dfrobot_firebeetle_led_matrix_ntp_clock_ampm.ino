@@ -107,7 +107,7 @@ void loop() {
   sprintf(temp1,"%02d:%02d:%02d",hours,minutes,seconds);
 }
 
-display.print(temp1,20);
+display.print(temp1,40);
 delay(150);
 }
 

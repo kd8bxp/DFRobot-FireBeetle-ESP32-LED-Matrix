@@ -55,10 +55,14 @@ https://kd8bxp.blogspot.com/
 #include <WiFiManager.h>         //https://github.com/bbx10/WiFiManager/tree/esp32
 
 int locDis = 1;
-int pasDis = 1;
+int pasDis = 0;
 int pplDis = 1;
 
 WiFiServer server(80);
+
+#define staticIP 192,168,0,200
+#define gateway 192,168,0,1
+#define subnet 255,255,255,0
 
 // Client variables 
 char linebuf[80];
@@ -140,6 +144,7 @@ void setup() {
   display.setFont(FONT8X4);
   display.print("ISS Notification Display!", 30);
   WiFiManager wifiManager;
+  //wifiManager.setSTAStaticIPConfig(IPAddress(staticIP),IPAddress(gateway),IPAddress(subnet));
   wifiManager.autoConnect("AutoConnectAP");
   Serial.println("connected...yeey :)");
   Serial.println("WiFi connected");
