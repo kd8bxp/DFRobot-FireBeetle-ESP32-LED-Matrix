@@ -29,13 +29,21 @@ https://kd8bxp.blogspot.com/
 #include <ArduinoJson.h> //https://github.com/bblanchon/ArduinoJson
 #include <TimeLib.h> 
 #include <Adafruit_NeoPixel.h> //https://github.com/adafruit/Adafruit_NeoPixel
+#include <DNSServer.h>  //https://github.com/bbx10/DNSServer_tng
+#if defined(ESP8266)
+#include <ESP8266WebServer.h>
+#else
+#include <WebServer.h> //https://github.com/bbx10/WebServer_tng
+#endif
+#include <WiFiManager.h>         //https://github.com/bbx10/WiFiManager/tree/esp32
 
 #define DATA D6
 #define CS D2
 #define WR D7
 
+WiFiServer server(80);
 DFRobot_HT1632C display = DFRobot_HT1632C(DATA, WR,CS);
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(1, D5, NEO_RGB + NEO_KHZ400);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(1, D9, NEO_RGB + NEO_KHZ800);
 
 //Find your Latitude and Longitude here
 //https://www.latlong.net/
@@ -70,6 +78,7 @@ void coreTask( void * pvParameters ){
 }
 
 void setup() {
+  pinMode(D9,OUTPUT);
   Serial.begin(9600);
   xTaskCreatePinnedToCore(
                     coreTask,   /* Function to implement the task */
@@ -82,7 +91,7 @@ void setup() {
  
    strip.begin();
   strip.show();
-  //strip.setBrightness(brightness);
+  strip.setBrightness(brightness);
   colorDisplay(strip.Color(0, 0, 0), p);
   display.begin();
   display.isLedOn(true);
@@ -90,7 +99,14 @@ void setup() {
   display.setCursor(0,0);
   display.setFont(FONT8X4);
   display.print("ISS Notification Display!", 30);
-  smartConnect();
+ WiFiManager wifiManager;
+  //wifiManager.setSTAStaticIPConfig(IPAddress(staticIP),IPAddress(gateway),IPAddress(subnet));
+  wifiManager.autoConnect("AutoConnectAP");
+  Serial.println("connected...yeey :)");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  display.print("Connected.....",30);
   pas = pas + "lat=" + (String)mylat+"&lon="+ (String)mylon;
   getJson(pas);
   decodePassJson();
@@ -102,10 +118,10 @@ void loop() {
   getJson(iss);
   decodeLocJson();
   getDistance();
-  setColor();
+  setISSColor(distance);
   issLocLEDDisplay();
-  //displayPassLED();
-  //displayPeopleLED();
+ // displayPassLED();
+ // displayPeopleLED();
   yield();
 
 }
@@ -254,6 +270,7 @@ void displayPassLED() {
   sprintf(temp, "Duration: [%d.%02d mins]",(int)duration[i],abs((int)(duration[i]*100)%100));
   display.print(temp,30);
    }
+   
 }
 
 void issLocLEDDisplay() {
@@ -266,9 +283,9 @@ void issLocLEDDisplay() {
  sprintf(temp1, "About %d miles from you.", distance);
  display.setCursor(0,0);
  display.print(temp1,30);
- //display.setCursor(0,0);
- //display.print("And moving away fast!!",30);
-  
+ display.setCursor(0,0);
+ display.print("And moving away fast!!",30);
+ // setISSColor();
 }
 
 void displayPeopleLED() {
@@ -289,22 +306,29 @@ void displayPeopleLED() {
   }
 }
 
-void setColor() {
-  Serial.println(distance);
-  if (distance > 1350) {colorDisplay(strip.Color(0,0,0),p);}
-  if (distance <= 1350 && distance >=1201) {
-    display.print("Alert, ISS is getting close",30); colorDisplay(strip.Color(255,153,100),p);} //White Alert
-  if (distance <=1200 && distance >=1151) {
-     display.print("It's almost time!", 30); colorDisplay(strip.Color(255,0,0),p);} //Red
-  if (distance <=1150 && distance >= 951) {display.print("Just on the Edge now!",30); colorDisplay(strip.Color(255,153,0),p);} //yellow
-  if (distance <=950) {display.print("Go Make that contact!", 30);colorDisplay(strip.Color(0, 255, 0), p);} //green
+void setISSColor(int tempD) {
+  Serial.print("Distance: ");
+  Serial.println(tempD);
+  
+  if (tempD >= 1351) {colorDisplay(strip.Color(0,0,0),p);}
+  else if (tempD <= 1350) {colorDisplay(strip.Color(255,0,0),p);} //Red on Horizon
+  else if (tempD <= 1200)  {colorDisplay(strip.Color(0,0,255),p);} //Blue Between 1151 and 1200 miles
+  else if (tempD <= 1150) {colorDisplay(strip.Color(255,255,0),p);} //looks green/yellow to me  
+  else if (tempD <= 950) {colorDisplay(strip.Color(0, 255, 0), p);} //Green Over head make contact
+  //colorDisplay(strip.Color(0,0,0),p);
+  //if ((tempD <=1150) && (tempD >= 951)) {colorDisplay(strip.Color(255,255,0),p);} //looks green/yellow to me
+  //if ((tempD <=1200) && (tempD >=1151)) {colorDisplay(strip.Color(0,0,255),p);} //Blue Between 1151 and 1200 miles
+  //if ((tempD <= 1350) && (tempD >=1201)) {colorDisplay(strip.Color(255,0,0),p);} //Red on horizon
   
 }
 
 void colorDisplay(uint32_t c, uint8_t wait) {
- 
-strip.setPixelColor(0, c);
-strip.show();
 
+//for (int i=0;i<strip.numPixels(); i++) { 
+strip.setPixelColor(0, c);
+
+strip.show();
+delay(wait);
+//}
 }
 
