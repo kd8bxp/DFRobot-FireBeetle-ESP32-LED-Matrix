@@ -12,6 +12,8 @@
 //#define RD 8
 #endif
 
+int wait = 1;
+
 DFRobot_HT1632C ht1632c = DFRobot_HT1632C(DATA, WR,CS);
 
 void setup() {
@@ -27,7 +29,7 @@ void loop() {
     for(uint8_t y=0; y<8; y++){
       ht1632c.setPixel(x,y);   
       ht1632c.writeScreen(); 
-      delay(1);
+      delay(wait);
     }
   }
 
@@ -35,7 +37,7 @@ void loop() {
     for(uint8_t y=0; y<8; y++){
       ht1632c.clrPixel(x,y);   
       ht1632c.writeScreen(); 
-      delay(1);
+      delay(wait);
     }
   }
 
@@ -43,7 +45,7 @@ void loop() {
     for(uint8_t y=0; y<8; y++){
       ht1632c.setPixel(x,y);   
       ht1632c.writeScreen(); 
-      delay(1);
+      delay(wait);
     }
   }
 
@@ -51,7 +53,7 @@ void loop() {
     for(uint8_t y=0; y<8; y++){
       ht1632c.clrPixel(x,y);   
       ht1632c.writeScreen(); 
-      delay(1);
+      delay(wait);
     }
   }
 }

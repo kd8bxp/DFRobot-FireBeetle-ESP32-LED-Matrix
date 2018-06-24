@@ -50,8 +50,10 @@ https://kd8bxp.blogspot.com/
 #include <WiFiManager.h>         //https://github.com/bbx10/WiFiManager/tree/esp32
 
 #include "DFRobot_HT1632C.h"
-#include "WundergroundClient.h" //https://github.com/ThingPulse/esp8266-weather-station  Need at least version 1.5.0 of library
-#include <JsonListener.h>
+//#include "WundergroundClient.h" //https://github.com/ThingPulse/esp8266-weather-station  Need at least version 1.5.0 of library
+#include "OpenWeatherMapCurrent.h" //Wunderground has been deprecated, OpenWeatherMap is included in the above library
+//#include "OpenWeatherMapForecast.h" 
+#include <JsonListener.h> //https://github.com/squix78/json-streaming-parser
 
 #define DATA D6
 #define CS D2
@@ -64,14 +66,28 @@ static int taskCore = 0;
 
 // Wunderground Settings
 const boolean IS_METRIC = false;
-const boolean usePM = true;
-const String WUNDERGRROUND_API_KEY = "";
+//const boolean usePM = true;
+/*const String WUNDERGRROUND_API_KEY = "";
 const String WUNDERGRROUND_LANGUAGE = "EN";
 const String WUNDERGROUND_COUNTRY = "OH";
 const String WUNDERGROUND_CITY = "Dayton";
+*/
+
+//API Key goes here see: https://docs.thingpulse.com/how-tos/openweathermap-key/
+//for information on how to obtain a key.
+String OPEN_WEATHER_MAP_APP_ID = ""; // API KEY HERE!!!
+String OPEN_WEATHER_MAP_LOCATION = "Dayton, US"; //Check OpenWeatherMap for the name of your town or location
+String OPEN_WEATHER_MAP_LANGUAGE = "en";
+//const uint8_t MAX_FORECASTS = 4;
 
 // Set to false, if you prefere imperial/inches, Fahrenheit
-WundergroundClient wunderground(IS_METRIC);
+//WundergroundClient wunderground(IS_METRIC);
+
+OpenWeatherMapCurrentData currentWeather;
+OpenWeatherMapCurrent currentWeatherClient;
+
+//OpenWeatherMapForecastData forecasts[MAX_FORECASTS];
+//OpenWeatherMapForecast forecastClient;
 
 void coreTask( void * pvParameters ){
 
@@ -122,20 +138,33 @@ yield();
 void CurrentWeather() {
   display.clearScreen();
   display.setCursor(0,0);
-  String wxTXT = "Today: " + wunderground.getWeatherText();
+  String wxTXT = "Today: " + currentWeather.description; //wunderground.getWeatherText();
+  Serial.println(wxTXT);
   const char *temp;
   temp = wxTXT.c_str();
-  display.print(temp,30);
-  //display->drawString(60 + x, 5 + y, wunderground.getWeatherText());
-    String tempature = "Current Tempature: " + wunderground.getCurrentTemp() + "°F";
+  Serial.println(temp);
+  display.print(temp,45);
+  
+  String temp3 = String(currentWeather.temp, 1) + (IS_METRIC ? " C" : " F");
+  Serial.println(temp3);
+    String tempature = "Current Tempature: " + temp3;
     const char *temp1;
     temp1 = tempature.c_str();
-  //display->drawString(60 + x, 15 + y, temp);
-  display.print(temp1,30);
+  Serial.println(temp1);
+  display.print(temp1,45);
 }
 
 void updateData() {
-   wunderground.updateConditions(WUNDERGRROUND_API_KEY, WUNDERGRROUND_LANGUAGE, WUNDERGROUND_COUNTRY, WUNDERGROUND_CITY);
+   //wunderground.updateConditions(WUNDERGRROUND_API_KEY, WUNDERGRROUND_LANGUAGE, WUNDERGROUND_COUNTRY, WUNDERGROUND_CITY);
+  currentWeatherClient.setMetric(IS_METRIC);
+  currentWeatherClient.setLanguage(OPEN_WEATHER_MAP_LANGUAGE);
+  currentWeatherClient.updateCurrent(&currentWeather, OPEN_WEATHER_MAP_APP_ID, OPEN_WEATHER_MAP_LOCATION);
+  //forecastClient.setMetric(IS_METRIC);
+  //forecastClient.setLanguage(OPEN_WEATHER_MAP_LANGUAGE);
+  //uint8_t allowedHours[] = {12};
+  //forecastClient.setAllowedHours(allowedHours, sizeof(allowedHours));
+  //forecastClient.updateForecasts(forecasts, OPEN_WEATHER_MAP_APP_ID, OPEN_WEATHER_MAP_LOCATION, MAX_FORECASTS);
+
     }
 
 

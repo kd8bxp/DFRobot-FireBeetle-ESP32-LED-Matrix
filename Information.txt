@@ -39,11 +39,12 @@ the DFRobot Library, or a memory limit, I'm not sure)
 
 --------------------
 DFRobot LED Matrix Working Weather Station Display - version 1.0.0
-Requires: WundergroundClient library https://github.com/ThingPulse/esp8266-weather-station  tested with version 1.5.0 of library
+Requires: WundergroundClient library https://github.com/ThingPulse/esp8266-weather-station  tested with version 1.5.0 of library, Json-Streaming-Parser Library https://github.com/squix78/json-streaming-parser
 
 Based on the ESP8266 Weather Station code by Squix78 and ThingPulse
 
 * See instructable for guide on setting this sketch up.
+** Wunderground has been deprecated, the same library works with OpenWeatherMap now
 
 ----------------------
 

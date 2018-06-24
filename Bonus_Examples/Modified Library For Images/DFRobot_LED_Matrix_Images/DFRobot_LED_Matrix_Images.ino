@@ -137,20 +137,23 @@ void setup() {
 }
 
 void loop() {
-  ht1632c.clearScreen();
 
- ht1632c.drawImage(mouthImg,8,24,0,0,0);
+ ht1632c.clearScreen();
+ ht1632c.drawImage(mouthImg,8,24,0,0,1);
  ht1632c.writeScreen();
  delay(1000);
 
-ht1632c.drawImage(marioImg,16,32,0,0,16);
+ht1632c.clearScreen();
+ht1632c.drawImage(marioImg,16,32,0,0,2);
 ht1632c.writeScreen();
 delay(1000);
 
+ht1632c.clearScreen();
 ht1632c.drawImage(IMAGES,8,8,0,0,0);
 ht1632c.writeScreen();
 delay(1000);
 
+ht1632c.clearScreen();
 ht1632c.drawImage(pic1,16,8,0,0,0);
 ht1632c.writeScreen();
 delay(1000);
@@ -159,6 +162,13 @@ ht1632c.clearScreen();
 ht1632c.drawImage(mario2Img,8,24,0,0,0);
 ht1632c.writeScreen();
 delay(1000);
+
+ht1632c.clearScreen();
+
+ for (int i=0; i<9; i++) {
+  fireworks(i); 
+ }
+ delay(1000);
 
 ht1632c.clearScreen();
 
@@ -175,10 +185,7 @@ ht1632c.writeScreen();
 delay(500);  
  }
  
- for (int i=0; i<9; i++) {
-  fireworks(i); 
- }
- delay(wait*0.2);
+
 } 
   
 void fireworks(int x) {  

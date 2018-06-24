@@ -14,7 +14,7 @@
 
 DFRobot_HT1632C ht1632c = DFRobot_HT1632C(DATA, WR,CS);
 
-int wait=10;
+int wait=15;
 
 void setup() {
   ht1632c.begin();
@@ -39,7 +39,7 @@ for (uint8_t x=0; x< 12; x++) {
   delay(wait);
 }
 
-for (uint8_t x=12; x>0; x--) {
+for (uint8_t x=12; x>1; x--) {
   ht1632c.setPixel(x,3);
   ht1632c.setPixel(x,4);
   ht1632c.setPixel(24-x,3);

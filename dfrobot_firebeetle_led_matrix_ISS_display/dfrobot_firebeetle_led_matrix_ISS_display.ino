@@ -55,8 +55,8 @@ https://kd8bxp.blogspot.com/
 #include <WiFiManager.h>         //https://github.com/bbx10/WiFiManager/tree/esp32
 
 int locDis = 1; //Display Location of ISS
-int pasDis = 0; //Display Pass Predictions
-int pplDis = 1; //Display People in Space
+int pasDis = 1; //Display Pass Predictions
+int pplDis = 0; //Display People in Space
 
 WiFiServer server(80);
 

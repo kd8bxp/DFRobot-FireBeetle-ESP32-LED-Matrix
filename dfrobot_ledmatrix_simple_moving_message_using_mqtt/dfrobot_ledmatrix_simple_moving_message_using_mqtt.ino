@@ -57,7 +57,7 @@ https://kd8bxp.blogspot.com/
 #include <WiFiManager.h>         //https://github.com/bbx10/WiFiManager/tree/esp32
 
 #include "DFRobot_HT1632C.h"
-#include <PubSubClient.h>
+#include <PubSubClient.h> //https://github.com/knolleary/pubsubclient
 
 #define DATA D6
 #define CS D2
