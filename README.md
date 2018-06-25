@@ -2,6 +2,9 @@
 
 ## Installation
 
+4 Projects in 1 Using DFRobot FireBeetle ESP32 & LED Matrix Cover  
+https://www.instructables.com/id/4-Projects-in-1-Using-DFRobot-FireBeetle-ESP32-LED  
+
 ## Things To Do
 
 ## Usage
